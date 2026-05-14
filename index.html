@@ -27,7 +27,112 @@
             color: var(--text);
             line-height: 1.6;
         }
+/* --- 3-Dots Floating Animation --- */
+.menu-dots {
+    width: 40px;
+    height: 45px; /* Height thori barhai hai */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    /* Position mazeed niche karne ke liye */
+    margin-top: 25px; 
+    /* Floating Effect */
+    animation: floatingDots 3s ease-in-out infinite;
+}
 
+.dot {
+    width: 6px;
+    height: 6px;
+    background: #d4af37;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    animation: dotPulse 1.5s infinite ease-in-out;
+}
+
+/* Dots pulse timing */
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Pulse Animation */
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.4; }
+}
+
+/* Floating Up-Down Animation */
+@keyframes floatingDots {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Hover par thora rotate ho */
+.menu-dots:hover {
+    transform: rotate(15deg);
+    transition: 0.3s;
+}
+
+
+/* --- 3D About Card Design --- */
+.about-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 5000;
+    align-items: center;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.about-card {
+    background: #ffffff;
+    width: 85%;
+    max-width: 350px;
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    transform: rotateY(90deg); /* Initial state for animation */
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.about-card h2 { color: #d4af37; margin: 0 0 15px 0; font-size: 24px; }
+
+.about-card p { 
+    font-size: 14px; 
+    line-height: 1.6; 
+    color: #444; 
+    margin-bottom: 0;
+}
+
+.dev-tag {
+    margin-top: 15px;
+    font-size: 11px;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 12px;
+    color: #d4af37;
+    font-weight: bold;
+    border: 1px solid #eee;
+}
+
+.close-btn {
+    background: #d4af37;
+    border: none;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 50px;
+    margin-top: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+}
         header {
             background: var(--white);
             padding: 30px 20px 60px;
@@ -549,7 +654,32 @@
         <div id="modalBody"></div>
     </div>
 </div>
+<!-- 3-Dots Menu Trigger -->
+<div class="menu-dots" onclick="toggleAbout()">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</div>
 
+<!-- 3D About Card Overlay -->
+<div class="about-overlay" id="aboutOverlay" onclick="closeAbout(event)">
+    <div class="about-card" id="aboutCard">
+        <i class="fas fa-utensils" style="font-size: 40px; color: #d4af37; margin-bottom: 15px;"></i>
+        <h2>About Us</h2>
+        <p>
+            <b>Hafiz Sweets Lal Khooh</b><br>
+            Providing Premium Quality Since Decades.<br><br>
+            <b>Main Office:</b><br>
+            95 Katar Band Road, Thokar Niaz Baig, Lahore.<br>
+        </p>
+        <hr style="border: 0.5px solid #eee; margin: 15px 0;">
+        <div class="dev-tag">
+            Developed by Muhammad Naeem<br>
+            Hafiz Sweets Team Member
+        </div>
+        <button onclick="toggleAbout()" class="close-btn">Close</button>
+    </div>
+</div>
     <header>
         <h1 class="main-title">Hafiz Sweets</h1>
         <div class="live-clock" id="clock">Loading...</div>
@@ -621,9 +751,16 @@
                             const fullDesc = data[id].desc || 'Fresh and tasty items available.';
                             const shortDesc = fullDesc.length > 68 ? fullDesc.substring(0, 65) + '...' : fullDesc;
 
-                            const msg = `Hafiz Sweets Menu%0A----------%0AProduct: ${data[id].name}%0APrice: ${data[id].price}%0A----------%0AHow much?`;
-                            const waLink = `https://wa.me/\( {myWhatsApp}?text= \){msg}`;
+                            // ✅ Fixed WhatsApp Message
+                            const msg = `Hafiz Sweets Lal Khooh\n\n` +
+                                        `Product: ${data[id].name}\n` +
+                                        `Price: Rs. ${data[id].price}\n\n` +
+                                        `Quantity: \n` +
+                                        `Address: \n` +
+                                        `Extra Details: `;
 
+                            // ✅ Yeh line ab sahi hai
+                            const waLink = `https://wa.me/923268077213?text=${encodeURIComponent(msg)}`;
                             grid.innerHTML += `
                                 <div class="card">
                                     <div class="image-container">
@@ -704,11 +841,11 @@
                 <div style="padding:15px;">
                     <div class="option-card" onclick="showContactCard()">
                         <h3><i class="fas fa-phone"></i> Contact Us</h3>
-                        <p>Team Member se rabta karein</p>
+                        <p>Our team members are available to assist you. Please reach out to them directly.</p>
                     </div>
                     <div class="option-card" onclick="showComplaintCard()">
                         <h3><i class="fas fa-exclamation-circle"></i> Complaint / Feedback</h3>
-                        <p>Apni shikayat ya sujhao dein</p>
+                        <p>Kindly let us know if you have any complaints or suggestions</p>
                     </div>
                     <button onclick="closeModal()" class="back-btn">Close</button>
                 </div>
@@ -799,7 +936,32 @@ function checkMaintenance() {
         }
     });
 }
+// Function to toggle 3D About Card
+function toggleAbout() {
+    const overlay = document.getElementById('aboutOverlay');
+    const card = document.getElementById('aboutCard');
 
+    if (overlay.style.display === 'flex') {
+        // Closing animation
+        card.style.transform = "rotateY(90deg)";
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 400);
+    } else {
+        // Opening animation
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            card.style.transform = "rotateY(0deg)";
+        }, 10);
+    }
+}
+
+// Close when clicking outside the card
+function closeAbout(e) {
+    if (e.target.id === 'aboutOverlay') {
+        toggleAbout();
+    }
+}
 let countdownInterval;
 function startCountdown(endTime) {
     clearInterval(countdownInterval);
@@ -837,4 +999,4 @@ window.onload = () => {
 };
     </script>
 </body>
-  </html>
+</html>
