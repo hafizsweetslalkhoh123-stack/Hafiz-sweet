@@ -641,6 +641,36 @@
         </div>
     </div>
 </div>
+<div id="feedbackPromptModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(3px);">
+    <div style="background: white; width: 100%; max-width: 400px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; font-family: 'Segoe UI', sans-serif;">
+        
+        <div style="background: var(--gold); color: white; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-comments"></i> Please Give Your Feedback</span>
+            <button id="closeFeedbackBtn" onclick="closeFeedbackPrompt()" style="display: none; background: rgba(255,255,255,0.25); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; font-weight: bold; align-items: center; justify-content: center; transition: 0.2s;">✕</button>
+        </div>
+
+        <div style="padding: 24px; box-sizing: border-box;">
+            <p style="margin: 0 0 20px 0; font-size: 14px; color: #636e72; text-align: center; font-weight: 500; line-height: 1.4;">محترم صارفین، آپ کی قیمتی رائے اور شکایات ہمارے معیار کو مزید بہتر بنانے میں مدد کرتی ہیں۔ ✨ اپنی رائے ہم تک ضرور پہنچائیں! 🙏📝 <br>شکریہ!</p>
+            
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="fbPromptName" placeholder="Your Full Name *" style="width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #ddd; background: #fafafa; font-size: 15px; outline: none; box-sizing: border-box; transition: 0.3s;" onfocus="this.style.borderColor='var(--gold)'; this.style.backgroundColor='#fff';" onblur="this.style.borderColor='#ddd'; this.style.backgroundColor='#fafafa';">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <textarea id="fbPromptDesc" rows="4" placeholder="Share your feedback or suggestions 📢. *" style="width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #ddd; background: #fafafa; font-size: 15px; outline: none; box-sizing: border-box; transition: 0.3s; resize: none;" onfocus="this.style.borderColor='var(--gold)'; this.style.backgroundColor='#fff';" onblur="this.style.borderColor='#ddd'; this.style.backgroundColor='#fafafa';"></textarea>
+            </div>
+            
+            <div id="fbCountdownTimer" style="text-align: center; margin-top: 15px; font-size: 14px; color: #d63031; font-weight: 700; background: #fff5f5; padding: 10px; border-radius: 10px;">
+                Please wait <span id="fbSeconds" style="font-size: 16px;">10</span> seconds to skip...
+            </div>
+
+            <button onclick="submitPromptFeedback()" style="width: 100%; padding: 14px; background: #25D366; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2); transition: 0.2s;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">
+                🚀 Submit Feedback
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== END MAINTENANCE POP ==================== -->
 <div class="floating-btn" id="floatBtn">
     <i class="fas fa-headset"></i>
@@ -680,7 +710,9 @@
         <button onclick="toggleAbout()" class="close-btn">Close</button>
     </div>
 </div>
+
     <header>
+        
         <h1 class="main-title">Hafiz Sweets</h1>
         <div class="live-clock" id="clock">Loading...</div>
     </header>
@@ -696,13 +728,15 @@
         <button class="tab-btn active" onclick="switchCategory('pizza', this)">🍕 Pizza Items</button>
         <button class="tab-btn" onclick="switchCategory('sweets', this)">🍰 Sweets Items</button>
         <button class="tab-btn" onclick="switchCategory('cakes', this)">🎂 Cakes Items</button>
+        <button class="tab-btn" onclick="switchCategory('drycakes', this)">🥮 Dry Cakes</button>
+        <button class="tab-btn" onclick="switchCategory('others', this)">✨ Other Items</button>
     </div>
 
     <div id="menu-grid" class="menu-grid"></div>
 
     <div id="empty-state" class="empty-msg" style="display: none;">
         <i class="fas fa-folder-open" style="font-size: 40px; margin-bottom: 10px;"></i>
-        <p>Folder Khali Hai!</p>
+        <p>​📦 This category is currently empty. New products coming soon! ✨</p>
     </div>
 
     <!-- Zoom Modal -->
@@ -986,6 +1020,90 @@ function startCountdown(endTime) {
             <div class="time-box"><div class="time-num">${seconds}</div><div class="time-label">Sec</div></div>
         `;
     }, 1000);
+}
+let feedbackTimerInterval;
+
+// --- Firebase Live Listener (Har dafa chalne wala) ---
+db.ref('system_control/force_feedback').on('value', (snapshot) => {
+    const shouldPrompt = snapshot.val();
+    
+    if (shouldPrompt === true) {
+        openFeedbackPrompt();
+    } else {
+        // Agar admin dashboard se hi band kar de to popup chala jaye
+        document.getElementById('feedbackPromptModal').style.display = 'none';
+        clearInterval(feedbackTimerInterval);
+    }
+});
+
+function openFeedbackPrompt() {
+    // Inputs ko khali karein taake naye siray se fill ho
+    document.getElementById('fbPromptName').value = '';
+    document.getElementById('fbPromptDesc').value = '';
+
+    const modal = document.getElementById('feedbackPromptModal');
+    const closeBtn = document.getElementById('closeFeedbackBtn');
+    const timerAlert = document.getElementById('fbCountdownTimer');
+    
+    modal.style.display = 'flex';
+    closeBtn.style.display = 'none'; // Shuru mein close button nahi dikhega
+    timerAlert.style.innerHTML = 'Please wait <span id="fbSeconds">10</span> seconds to skip...';
+    timerAlert.style.color = '#d63031';
+
+    let secondsLeft = 5;
+    document.getElementById('fbSeconds').innerText = secondsLeft;
+
+    clearInterval(feedbackTimerInterval);
+
+    // 10 Seconds Counter
+    feedbackTimerInterval = setInterval(() => {
+        secondsLeft--;
+        
+        if (secondsLeft > 0) {
+            document.getElementById('fbSeconds').innerText = secondsLeft;
+        } else {
+            // 10 seconds khatam hone par automatic close NAHI hoga, balkay button show hoga
+            clearInterval(feedbackTimerInterval);
+            closeBtn.style.display = 'flex'; // Close button ab samne aa gaya
+            timerAlert.innerText = "Thank you for your time! 🙏 You can proceed to close this window, or if you have a moment, please share your valuable feedback with us. 📝🤝";
+            timerAlert.style.color = "#2e7d32"; // Green signal alert
+        }
+    }, 1000);
+}
+
+function closeFeedbackPrompt() {
+    clearInterval(feedbackTimerInterval);
+    document.getElementById('feedbackPromptModal').style.display = 'none';
+}
+
+function submitPromptFeedback() {
+    const name = document.getElementById('fbPromptName').value.trim();
+    const desc = document.getElementById('fbPromptDesc').value.trim();
+
+    if (!name || !desc) {
+        alert("Naam aur Feedback likhna zaroori hai!");
+        return;
+    }
+
+    const feedbackData = {
+        name: name,
+        phone: "Via Live Popup",
+        location: "Website User",
+        date: new Date().toISOString().split('T')[0],
+        description: desc,
+        timestamp: new Date().toISOString(),
+        status: "New Feedback"
+    };
+
+    db.ref('complaints/').push(feedbackData)
+        .then(() => {
+            alert("✅ Thank you! Your feedback has been successfully submitted. 🌟.");
+            closeFeedbackPrompt();
+        })
+        .catch((error) => {
+            console.error(error);
+            alert("Kuch issue hua hai. Dobara try karein.");
+        });
 }
 // ==================== END MAINTENANCE SYSTEM ====================
         window.onload = loadItems;
